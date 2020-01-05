@@ -323,6 +323,8 @@ jobs:
           user: __token__
           password: ${{ secrets.pypi_password }}
           packages_dir: crates/misc/py/dist/
+          repository_url: https://test.pypi.org/legacy/
+
     #- uses: actions/checkout@v1
       #with:
         #submodules: true
