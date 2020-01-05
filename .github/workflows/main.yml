@@ -301,7 +301,17 @@ jobs:
 
       - uses: actions/download-artifact@v1
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-ubuntu-latest
+          path: crates/misc/py/dist
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: wheels-windows-latest
+          path: crates/misc/py/dist
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: wheels-macos-latest
           path: crates/misc/py/dist
 
       - run:
