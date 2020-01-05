@@ -220,8 +220,18 @@ jobs:
         architecture: x64
     - run: $CENTOS pip3 install setuptools wheel==0.31.1 setuptools-rust
       shell: bash
+
     - run: (cd crates/misc/py && $CENTOS $python setup.py bdist_wheel)
       shell: bash
+
+    # Upload wheel to the Python Package Index (Pypi)
+    - name: Upload release to Pypi
+      if: github.event_name == 'create' && github.event.ref_type == 'tag' && startsWith(github.event.ref, 'v')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
+        packages_dir: crates/misc/py/dist/
 
     # Clear the build directory between building different wheels for different
     # Python versions to ensure that we don't package dynamic libraries twice by
