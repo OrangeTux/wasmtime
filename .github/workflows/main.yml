@@ -229,12 +229,13 @@ jobs:
     - run: $CENTOS rm -rf crates/misc/py/build
       shell: bash
 
+  # Upload wheel to the Python Package Index (Pypi)
   publish_wheels:
-    # Upload wheel to the Python Package Index (Pypi)
-    - name: Upload release to Pypi
-      needs:  wheels
-      runs-on: ubuntu-latest
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    name: Upload release to Pypi
+    needs:  wheels
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    steps:
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
