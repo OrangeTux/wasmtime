@@ -1,8 +1,8 @@
 name: CI
 on:
-  push:
-    branches: [master]
-    tags-ignore: [dev]
+  #push:
+    #branches: [master]
+    #tags-ignore: [dev]
   pull_request:
     branches: [master]
 
