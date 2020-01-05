@@ -236,11 +236,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     steps:
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
-        packages_dir: crates/misc/py/dist/
+      - uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          packages_dir: crates/misc/py/dist/
 
     # Set up Python 3.7 (and build it on Linux), reinstall dependencies, then
     # rebuild our wheels
