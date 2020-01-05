@@ -217,7 +217,7 @@ jobs:
       with:
         python-version: '3.6'
         architecture: x64
-    - run: $CENTOS pip3 install setuptools wheel==0.31.1 setuptools-rust
+    - run: $CENTOS pip3 install setuptools wheel==0.31.1 setuptools-rust auditwheel
       shell: bash
 
     - run: (cd crates/misc/py && $CENTOS $python setup.py bdist_wheel)
