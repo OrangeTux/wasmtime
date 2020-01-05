@@ -451,6 +451,18 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: bins-windows-latest
+    - name: Download Ubuntu wheel
+      uses: actions/download-artifact@v1
+      with:
+        name: wheels-ubuntu-latest
+    - name: Download Windows wheel
+      uses: actions/download-artifact@v1
+      with:
+        name: wheels-windows-latest
+    - name: Download MacOS wheel
+      uses: actions/download-artifact@v1
+      with:
+        name: wheels-macos-latest
 
     - name: Assemble gh-pages
       run: |
@@ -493,38 +505,14 @@ jobs:
         name: tarballs
         path: dist
 
-    - name: Publish wheels
-      steps:
-        - run: |
-            set -e
-            mkdir -p crates/misc/py/dist/
-          shell: bash
-
-        - uses: actions/download-artifact@v1
-          with:
-            name: wheels-ubuntu-latest
-            path: crates/misc/py/dist
-
-        - uses: actions/download-artifact@v1
-          with:
-            name: wheels-windows-latest
-            path: crates/misc/py/dist
-
-        - uses: actions/download-artifact@v1
-          with:
-            name: wheels-macos-latest
-            path: crates/misc/py/dist
-
-        - run:
-            ls -l crates/misc/py/dist
-
-        - uses: pypa/gh-action-pypi-publish@master
-          if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-          with:
-            user: __token__
-            password: ${{ secrets.pypi_password }}
-            packages_dir: crates/misc/py/dist/
-            repository_url: https://test.pypi.org/legacy/
+    - name: Publish Python wheels on Pypi
+      uses: pypa/gh-action-pypi-publish@master
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
+        packages_dir: .
+        repository_url: https://test.pypi.org/legacy/
 
     # ... and if this was an actual push (tag or `master`) then we publish a
     # new release. This'll automatically publish a tag release or update `dev`
