@@ -301,7 +301,7 @@ jobs:
 
       - uses: actions/download-artifact@v1
         with:
-          name: wheel-${{ matris.os }}
+          name: wheel-${{ matrix.os }}
           path: crates/misc/py/dist
 
       - run:
