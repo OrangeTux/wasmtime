@@ -416,6 +416,11 @@ jobs:
         submodules: true
     - run: rustup update stable && rustup default stable
 
+    - run: |
+      set -e
+      mkdir -p wheels/
+      shell: bash
+
     # Download all the artifacts that we'll be publishing. Should keep an eye on
     # the `download-artifact` repository to see if we can ever get something
     # like "download all artifacts" or "download this list of artifacts"
@@ -431,6 +436,7 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: wheels-macos-latest
+        path: wheels
     - name: Download macOS binaries
       uses: actions/download-artifact@v1
       with:
@@ -439,6 +445,7 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: wheels-ubuntu-latest
+        path: wheels
     - name: Download Linux binaries
       uses: actions/download-artifact@v1
       with:
@@ -447,22 +454,11 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: wheels-windows-latest
+        path: wheels
     - name: Download Windows binaries
       uses: actions/download-artifact@v1
       with:
         name: bins-windows-latest
-    - name: Download Ubuntu wheel
-      uses: actions/download-artifact@v1
-      with:
-        name: wheels-ubuntu-latest
-    - name: Download Windows wheel
-      uses: actions/download-artifact@v1
-      with:
-        name: wheels-windows-latest
-    - name: Download MacOS wheel
-      uses: actions/download-artifact@v1
-      with:
-        name: wheels-macos-latest
 
     - name: Assemble gh-pages
       run: |
@@ -511,7 +507,7 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
-        packages_dir: .
+        packages_dir: wheels/
         repository_url: https://test.pypi.org/legacy/
 
     # ... and if this was an actual push (tag or `master`) then we publish a
