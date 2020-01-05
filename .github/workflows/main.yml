@@ -229,19 +229,6 @@ jobs:
     - run: $CENTOS rm -rf crates/misc/py/build
       shell: bash
 
-  # Upload wheel to the Python Package Index (Pypi)
-  publish_wheels:
-    name: Upload release to Pypi
-    needs:  wheels
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-    steps:
-      - uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          packages_dir: crates/misc/py/dist/
-
     # Set up Python 3.7 (and build it on Linux), reinstall dependencies, then
     # rebuild our wheels
     #- name: Setup Python 3.7
@@ -280,150 +267,52 @@ jobs:
     #- run: (cd crates/misc/py && $CENTOS $python setup.py bdist_wheel)
       #shell: bash
 
-    ## Move `dist/*.whl` into `wheelhouse/` so we can deploy them, but on Linux we
-    ## need to run an `auditwheel` command as well to turn these into "manylinux"
-    ## wheels to run across a number of distributions.
-    #- run: cp crates/misc/py/dist/*.whl crates/misc/py/wheelhouse/
-      #shell: bash
-      #if: matrix.os != 'ubuntu-latest'
-    #- run: |
-        #set -e
-        #cd crates/misc/py
-        #for whl in dist/*.whl; do
-            #$CENTOS auditwheel repair "$whl" -w wheelhouse/
-        #done
-      #shell: bash
-      #if: matrix.os == 'ubuntu-latest'
+    # Move `dist/*.whl` into `wheelhouse/` so we can deploy them, but on Linux we
+    # need to run an `auditwheel` command as well to turn these into "manylinux"
+    # wheels to run across a number of distributions.
+    - run: cp crates/misc/py/dist/*.whl crates/misc/py/wheelhouse/
+      shell: bash
+      if: matrix.os != 'ubuntu-latest'
+    - run: |
+        set -e
+        cd crates/misc/py
+        for whl in dist/*.whl; do
+            $CENTOS auditwheel repair "$whl" -w wheelhouse/
+        done
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
 
-    ## Upload this for the publishing stage of pipelines
-    #- uses: actions/upload-artifact@v1
-      #with:
-        #name: wheels-${{ matrix.os }}
-        #path: crates/misc/py/wheelhouse
+    # Upload this for the publishing stage of pipelines
+    - uses: actions/upload-artifact@v1
+      with:
+        name: wheels-${{ matrix.os }}
+        path: crates/misc/py/wheelhouse
 
-  ## Perform release builds of `wasmtime` and `libwasmtime.so`. Builds on
-  ## Windows/Mac/Linux, and artifacts are uploaded after the build is finished.
-  ## Note that we also run tests here to test exactly what we're deploying.
-  #build:
-    #name: Build wasmtime
-    #runs-on: ${{ matrix.os }}
-    #strategy:
-      #matrix:
-        #os: [ubuntu-latest, macos-latest, windows-latest]
-    #steps:
-    #- uses: actions/checkout@v1
-      #with:
-        #submodules: true
-    #- uses: ./.github/actions/install-rust
-    #- uses: ./.github/actions/binary-compatible-builds
-
-    ## Install wasm32-wasi target in order to build wasi-common's integration
-    ## tests
-    #- run: rustup target add wasm32-wasi
-
-    ## Build `wasmtime` and executables
-    #- run: $CENTOS cargo build --release --bin wasmtime --bin wasm2obj
-      #shell: bash
-    ## Build `libwasmtime.so`
-    #- run: $CENTOS cargo build --release --manifest-path crates/api/Cargo.toml
-      #shell: bash
-    ## Test what we just built
-    #- run: $CENTOS cargo test --features test_programs --release --all --exclude lightbeam --exclude wasmtime --exclude wasmtime-fuzzing
-      #shell: bash
-      #env:
-        #RUST_BACKTRACE: 1
-
-    ## ... and now perform some goop to move all the relevant artifacts into
-    ## something that we'll upload from this action.
-
-    #- run: mkdir dist
-      #shell: bash
-
-    ## Move binaries to dist folder
-    #- run: cp target/release/{wasmtime,wasm2obj} dist
-      #if: matrix.os != 'windows-latest'
-    #- run: cp target/release/{wasmtime,wasm2obj}.exe dist
-      #shell: bash
-      #if: matrix.os == 'windows-latest'
-
-    ## Move libwasmtime dylib to dist folder
-    #- run: cp target/release/libwasmtime.{so,a} dist
-      #if: matrix.os == 'ubuntu-latest'
-    #- run: cp target/release/libwasmtime.{dylib,a} dist
-      #if: matrix.os == 'macos-latest'
-    #- run: cp target/release/wasmtime.{dll,lib} dist
-      #shell: bash
-      #if: matrix.os == 'windows-latest'
-
-    ## Make a Windows MSI installer if we're on Windows
-    #- run: |
-        #export WT_VERSION=`cat Cargo.toml | sed -n 's/^version = "\([^"]*\)".*/\1/p'`
-        #"$WIX/bin/candle" -arch x64 -out target/wasmtime.wixobj ci/wasmtime.wxs
-        #"$WIX/bin/light" -out dist/installer.msi target/wasmtime.wixobj -ext WixUtilExtension
-        #rm dist/installer.wixpdb
-      #shell: bash
-      #if: matrix.os == 'windows-latest'
-
-    #- uses: actions/upload-artifact@v1
-      #with:
-        #name: bins-${{ matrix.os }}
-        #path: dist
-
-  ## Build and test the .NET bindings
-  #dotnet:
-    #name: Test Wasmtime for .NET bindings
-    #runs-on: ${{ matrix.os }}
-    #strategy:
-      #matrix:
-        #build: [linux-debug, linux-release, macos-debug, macos-release, windows-debug, windows-release]
-        #include:
-          #- build: linux-debug
-            #os: ubuntu-latest
-            #config: debug
-          #- build: linux-release
-            #os: ubuntu-latest
-            #config: release
-          #- build: macos-debug
-            #os: macos-latest
-            #config: debug
-          #- build: macos-release
-            #os: macos-latest
-            #config: release
-          #- build: windows-debug
-            #os: windows-latest
-            #config: debug
-          #- build: windows-release
-            #os: windows-latest
-            #config: release
-    #steps:
-    #- uses: actions/checkout@v1
-      #with:
-        #submodules: true
-    #- uses: ./.github/actions/install-rust
-    #- uses: ./.github/actions/binary-compatible-builds
-    #- run: rustup target add wasm32-wasi
-    #- uses: actions/setup-dotnet@v1
-      #with:
-        #dotnet-version: '3.0.101'
-    #- name: Test
-      #run: |
-        #cd crates/misc/dotnet/tests
-        #dotnet test -c ${{ matrix.config }}
-    #- name: Create package
-      #run: |
-        #cd crates/misc/dotnet/src
-        #dotnet pack -c ${{ matrix.config }}
-      #if: matrix.os == 'macos-latest' # Currently the pack target only supports macOS
-
-  ## Consumes all published artifacts from all the previous build steps, creates
-  ## a bunch of tarballs for all of them, and then publishes the tarballs
-  ## themselves as an artifact (for inspection) and then optionally creates
-  ## github releases and/or tags for pushes.
-  #publish:
-    #name: Publish
+  publish:
+    name: Publish Wheels
+    needs: [wheels]
     #needs: [doc_book, doc_api, wheels, build]
-    #runs-on: ubuntu-latest
-    #steps:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          set -e
+          mkdir crates/misc/py/dist/
+        shell: bash
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: wheel-${{ matris.os }}
+          path: crates/misc/py/dist
+
+      - run:
+          ls -l crates/misc/py/dist
+
+      - uses: pypa/gh-action-pypi-publish@master
+        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
+          packages_dir: crates/misc/py/dist/
     #- uses: actions/checkout@v1
       #with:
         #submodules: true
@@ -432,6 +321,10 @@ jobs:
     ## Download all the artifacts that we'll be publishing. Should keep an eye on
     ## the `download-artifact` repository to see if we can ever get something
     ## like "download all artifacts" or "download this list of artifacts"
+    #- name: Download wheels
+      #uses: actions/download-artifact@v1
+      #with:
+        #name: doc-book
     #- name: Download book
       #uses: actions/download-artifact@v1
       #with:
