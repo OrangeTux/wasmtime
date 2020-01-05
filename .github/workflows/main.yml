@@ -296,7 +296,7 @@ jobs:
     steps:
       - run: |
           set -e
-          mkdir crates/misc/py/dist/
+          mkdir -p crates/misc/py/dist/
         shell: bash
 
       - uses: actions/download-artifact@v1
