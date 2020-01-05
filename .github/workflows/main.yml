@@ -223,20 +223,23 @@ jobs:
     - run: (cd crates/misc/py && $CENTOS $python setup.py bdist_wheel)
       shell: bash
 
+    # Clear the build directory between building different wheels for different
+    # Python versions to ensure that we don't package dynamic libraries twice by
+    # accident.
+    - run: $CENTOS rm -rf crates/misc/py/build
+      shell: bash
+
+  publish_wheels:
     # Upload wheel to the Python Package Index (Pypi)
     - name: Upload release to Pypi
+      needs:  wheels
+      runs-on: ubuntu-latest
       if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
         packages_dir: crates/misc/py/dist/
-
-    # Clear the build directory between building different wheels for different
-    # Python versions to ensure that we don't package dynamic libraries twice by
-    # accident.
-    - run: $CENTOS rm -rf crates/misc/py/build
-      shell: bash
 
     # Set up Python 3.7 (and build it on Linux), reinstall dependencies, then
     # rebuild our wheels
