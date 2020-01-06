@@ -507,9 +507,9 @@ jobs:
 
     - run: |
         ls -la dist/ &&
-        mkdir /tmp/whl &&
-        find dist/ -name '*.whl' -type f -exec cp '{}' /tmp/whl -v \; &&
-        ls -la /tmp/whl
+        mkdir -p tmp
+        find dist/ -name '*.whl' -type f -exec cp '{}' tmp -v \; &&
+        ls -la tmp
 
     - name: Publish Python wheels on Pypi
       uses: pypa/gh-action-pypi-publish@master
@@ -517,7 +517,7 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
-        packages_dir: /tmp/whl
+        packages_dir: tmp
         repository_url: https://test.pypi.org/legacy/
 
     # ... and if this was an actual push (tag or `master`) then we publish a

@@ -1,0 +1,87 @@
+diff --git a/src/bin/wasmtime.rs b/src/bin/wasmtime.rs
+index 4a8be144..39b1470c 100644
+--- a/src/bin/wasmtime.rs
++++ b/src/bin/wasmtime.rs
+@@ -52,39 +52,40 @@ including calling the start function if one is present. Additional functions
+ given with --invoke are then called.
+
+ Usage:
+-    wasmtime [-odg] [--enable-simd] [--wasi-c] [--disable-cache | \
++    wasmtime [-odg] [--enable-simd] [--enable-multivalue] [--wasi-c] [--disable-cache | \
+      --cache-config=<cache_config_file>] [--preload=<wasm>...] [--env=<env>...] [--dir=<dir>...] \
+      [--mapdir=<mapping>...] [--lightbeam | --cranelift] <file> [<arg>...]
+-    wasmtime [-odg] [--enable-simd] [--wasi-c] [--disable-cache | \
++    wasmtime [-odg] [--enable-simd] [--enable-multivalue] [--wasi-c] [--disable-cache | \
+      --cache-config=<cache_config_file>] [--env=<env>...] [--dir=<dir>...] \
+      [--mapdir=<mapping>...] --invoke=<fn> [--lightbeam | --cranelift] <file> [<arg>...]
+     wasmtime --create-cache-config [--cache-config=<cache_config_file>]
+     wasmtime --help | --version
+
+ Options:
+-    --invoke=<fn>       name of function to run
+-    -o, --optimize      runs optimization passes on the translated functions
+-    --disable-cache     disables cache system
++    --invoke=<fn>        name of function to run
++    -o, --optimize       runs optimization passes on the translated functions
++    --disable-cache      disables cache system
+     --cache-config=<cache_config_file>
+-                        use specified cache configuration;
+-                        can be used with --create-cache-config to specify custom file
++                         use specified cache configuration;
++                         can be used with --create-cache-config to specify custom file
+     --create-cache-config
+-                        creates default configuration and writes it to the disk,
+-                        use with --cache-config to specify custom config file
+-                        instead of default one
+-    -g                  generate debug information
+-    -d, --debug         enable debug output on stderr/stdout
+-    --lightbeam         use Lightbeam for all compilation
+-    --cranelift         use Cranelift for all compilation
+-    --enable-simd       enable proposed SIMD instructions
+-    --wasi-c            enable the wasi-c implementation of `wasi_unstable`
+-    --preload=<wasm>    load an additional wasm module before loading the main module
+-    --env=<env>         pass an environment variable (\"key=value\") to the program
+-    --dir=<dir>         grant access to the given host directory
+-    --mapdir=<mapping>  where <mapping> has the form <wasmdir>::<hostdir>, grant access to
+-                        the given host directory with the given wasm directory name
+-    -h, --help          print this help message
+-    --version           print the Cranelift version
++                         creates default configuration and writes it to the disk,
++                         use with --cache-config to specify custom config file
++                         instead of default one
++    -g                   generate debug information
++    -d, --debug          enable debug output on stderr/stdout
++    --lightbeam          use Lightbeam for all compilation
++    --cranelift          use Cranelift for all compilation
++    --enable-simd        enable proposed SIMD instructions
++    --enable-multivalue  enable multi value function return
++    --wasi-c             enable the wasi-c implementation of `wasi_unstable`
++    --preload=<wasm>     load an additional wasm module before loading the main module
++    --env=<env>          pass an environment variable (\"key=value\") to the program
++    --dir=<dir>          grant access to the given host directory
++    --mapdir=<mapping>   where <mapping> has the form <wasmdir>::<hostdir>, grant access to
++                         the given host directory with the given wasm directory name
++    -h, --help           print this help message
++    --version            print the Cranelift version
+ ";
+
+ #[derive(Deserialize, Debug, Clone)]
+@@ -98,6 +99,7 @@ struct Args {
+     flag_debug: bool,
+     flag_g: bool,
+     flag_enable_simd: bool,
++    flag_enable_multivalue: bool,
+     flag_lightbeam: bool,
+     flag_cranelift: bool,
+     flag_invoke: Option<String>,
+@@ -252,6 +254,11 @@ fn main() -> Result<()> {
+         features.simd = true;
+     }
+
++    // Enable Multi-value if requested
++    features.multi_value = args.flag_enable_multivalue;
++
+     // Enable optimization if requested.
+     if args.flag_optimize {
+         flag_builder.set("opt_level", "speed")?;
+
