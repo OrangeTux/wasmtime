@@ -451,18 +451,6 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: bins-windows-latest
-    - name: Download Ubuntu wheel
-      uses: actions/download-artifact@v1
-      with:
-        name: wheels-ubuntu-latest
-    - name: Download Windows wheel
-      uses: actions/download-artifact@v1
-      with:
-        name: wheels-windows-latest
-    - name: Download MacOS wheel
-      uses: actions/download-artifact@v1
-      with:
-        name: wheels-macos-latest
 
     - name: Assemble gh-pages
       run: |
